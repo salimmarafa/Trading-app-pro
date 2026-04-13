@@ -1,0 +1,32 @@
+{
+  "name": "TES Pro — Trading Execution System",
+  "short_name": "TES Pro",
+  "description": "Institutional-grade trading discipline, journal, currency strength, and AI trade suggestions",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#080c14",
+  "theme_color": "#080c14",
+  "lang": "en",
+  "categories": ["finance", "productivity"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj48cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjM2IiBmaWxsPSIjMDgwYzE0Ii8+PHRleHQgeD0iOTYiIHk9IjEyMCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNzgiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiNlNGFlMmEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlRFUzwvdGV4dD48L3N2Zz4=",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9Ijk2IiBmaWxsPSIjMDgwYzE0Ii8+PHRleHQgeD0iMjU2IiB5PSIzMjAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjIxMCIgZm9udC13ZWlnaHQ9IjkwMCIgZmlsbD0iI2U0YWUyYSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+VEVTPC90ZXh0Pjwvc3ZnPg==",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "Pre-Trade Checklist", "short_name": "Checklist", "url": "./index.html#checklist" },
+    { "name": "Trade Journal",       "short_name": "Journal",   "url": "./index.html#journal" },
+    { "name": "Trade Signals",       "short_name": "Signals",   "url": "./index.html#suggestions" }
+  ]
+}

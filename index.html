@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>TES Pro — Trading Execution System</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="theme-color" content="#080c14"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="TES Pro"/>
+  <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjM2IiBmaWxsPSIjMDgwYzE0Ii8+PHRleHQgeD0iOTAiIHk9IjExNSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNzIiIGZvbnQtd2VpZ2h0PSI4MDAiIGZpbGw9IiNlNGFlMmEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlRFUzwvdGV4dD48L3N2Zz4="/>
+
+  <!-- Fonts: Barlow Condensed (display) + DM Sans (body) + JetBrains Mono (data) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Firebase v9 compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     SPLASH / LOADING
+══════════════════════════════════════════ -->
+<div id="screen-splash" class="screen active">
+  <div class="splash-inner">
+    <div class="splash-logo">
+      <span class="splash-tes">TES</span>
+      <span class="splash-pro">PRO</span>
+    </div>
+    <div class="splash-bar"><div class="splash-fill"></div></div>
+    <div class="splash-tagline">Initialising your edge...</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     AUTH SCREEN
+══════════════════════════════════════════ -->
+<div id="screen-auth" class="screen">
+  <div class="auth-bg-grid"></div>
+  <div class="auth-container">
+    <div class="auth-brand">
+      <div class="auth-logo"><span>TES</span><span class="pro-badge">PRO</span></div>
+      <p class="auth-brand-sub">Institutional trading discipline. Simplified.</p>
+    </div>
+
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="atab active" data-tab="login" onclick="authTab('login',this)">Sign In</button>
+        <button class="atab" data-tab="signup" onclick="authTab('signup',this)">Create Account</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="auth-login" class="auth-panel active">
+        <div class="fg">
+          <label>Email</label>
+          <input id="l-email" type="email" placeholder="trader@example.com" autocomplete="email"/>
+        </div>
+        <div class="fg">
+          <label>Password</label>
+          <input id="l-pass" type="password" placeholder="Your password" autocomplete="current-password"/>
+        </div>
+        <label class="cb-row">
+          <input type="checkbox" id="l-remember" checked/>
+          <span class="cb-box"></span>
+          <span>Keep me signed in</span>
+        </label>
+        <p id="l-err" class="auth-err"></p>
+        <button class="btn-gold btn-full" onclick="doLogin()">Sign In <span class="arr">→</span></button>
+      </div>
+
+      <!-- SIGNUP -->
+      <div id="auth-signup" class="auth-panel">
+        <div class="fg">
+          <label>Full Name</label>
+          <input id="s-name" type="text" placeholder="Your name"/>
+        </div>
+        <div class="fg">
+          <label>Email</label>
+          <input id="s-email" type="email" placeholder="trader@example.com" autocomplete="email"/>
+        </div>
+        <div class="fg">
+          <label>Password <small>(min 6 chars)</small></label>
+          <input id="s-pass" type="password" placeholder="Strong password" autocomplete="new-password"/>
+        </div>
+        <p id="s-err" class="auth-err"></p>
+        <button class="btn-gold btn-full" onclick="doSignup()">Create Account <span class="arr">→</span></button>
+      </div>
+    </div>
+
+    <p class="auth-legal">By signing up you agree to our terms. Your data is encrypted and private.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     UPGRADE / LOCKED SCREEN
+══════════════════════════════════════════ -->
+<div id="screen-locked" class="screen">
+  <div class="locked-wrap">
+    <div class="locked-glow"></div>
+    <div class="locked-badge">🔒 PREMIUM</div>
+    <h1 class="locked-title">Unlock Full Access</h1>
+    <p class="locked-sub">Get the complete institutional trading system — journal, analytics, AI trade suggestions, currency strength engine, and more.</p>
+
+    <div class="locked-features">
+      <div class="lf-item"><span class="lf-check">✓</span> Currency Strength Dashboard</div>
+      <div class="lf-item"><span class="lf-check">✓</span> Auto Trade Suggestions (AI)</div>
+      <div class="lf-item"><span class="lf-check">✓</span> Pre-Trade Checklist</div>
+      <div class="lf-item"><span class="lf-check">✓</span> Trade Journal + Analytics</div>
+      <div class="lf-item"><span class="lf-check">✓</span> Fundamentals Bias Engine</div>
+      <div class="lf-item"><span class="lf-check">✓</span> Risk-On / Risk-Off Dashboard</div>
+    </div>
+
+    <div class="locked-price">
+      <div class="price-main">$19<span class="price-period">/month</span></div>
+      <div class="price-or">or</div>
+      <div class="price-main">$149<span class="price-period">/year</span></div>
+    </div>
+
+    <div class="payment-btns">
+      <button class="btn-paystack" onclick="initiatePaystack()">
+        <span class="pay-icon">₦</span> Pay with Paystack
+      </button>
+      <button class="btn-paypal" onclick="initiatePaypal()">
+        <span class="pay-icon">P</span> Pay with PayPal
+      </button>
+    </div>
+
+    <p class="locked-note" id="locked-user-email"></p>
+    <button class="btn-ghost-sm" onclick="doLogout()">Sign out</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════ -->
+<div id="screen-app" class="screen">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="tb-left">
+      <div class="tb-logo">TES <span class="tb-pro">PRO</span></div>
+    </div>
+    <div class="tb-right">
+      <div class="tb-sync" id="tb-sync">
+        <span class="sync-dot"></span><span id="sync-label">Live</span>
+      </div>
+      <div class="tb-user">
+        <div class="tb-avatar" id="tb-avatar">T</div>
+        <span class="tb-email" id="tb-email">Trader</span>
+      </div>
+      <button class="tb-logout" onclick="doLogout()" title="Logout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <div class="app-body">
+
+    <!-- ▸ DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+
+      <div class="page-hero">
+        <div>
+          <h1 class="hero-greeting" id="hero-greeting">Good morning</h1>
+          <p class="hero-date" id="hero-date"></p>
+        </div>
+        <div class="hero-streak">
+          <div class="streak-num" id="streak-num">0</div>
+          <div class="streak-lbl">Day Streak 🔥</div>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-row">
+        <div class="stat-tile">
+          <div class="st-val" id="st-trades">—</div>
+          <div class="st-key">Trades</div>
+        </div>
+        <div class="stat-tile">
+          <div class="st-val green" id="st-wr">—</div>
+          <div class="st-key">Win Rate</div>
+        </div>
+        <div class="stat-tile">
+          <div class="st-val gold" id="st-rr">—</div>
+          <div class="st-key">Avg R:R</div>
+        </div>
+        <div class="stat-tile">
+          <div class="st-val" id="st-pnl">—</div>
+          <div class="st-key">Net R</div>
+        </div>
+      </div>
+
+      <!-- Risk Bias Panel -->
+      <div class="section-label">Market Bias</div>
+      <div class="bias-panel" id="bias-panel">
+        <div class="bias-btns">
+          <button class="bias-btn risk-on" onclick="setBias('risk-on',this)">🟢 Risk-On</button>
+          <button class="bias-btn neutral active" onclick="setBias('neutral',this)">⚪ Neutral</button>
+          <button class="bias-btn risk-off" onclick="setBias('risk-off',this)">🔴 Risk-Off</button>
+        </div>
+        <div class="bias-explain" id="bias-explain">Set your market sentiment before trading today.</div>
+      </div>
+
+      <!-- Currency Strength -->
+      <div class="section-label">Currency Strength</div>
+      <div class="cs-card" id="cs-card">
+        <div class="cs-inputs-grid" id="cs-inputs"></div>
+        <button class="btn-gold-sm" onclick="calcStrength()">Calculate Strength →</button>
+        <div class="cs-results" id="cs-results" style="display:none">
+          <div class="cs-table-wrap">
+            <table class="cs-table" id="cs-table"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fundamentals Notes -->
+      <div class="section-label">Fundamentals Notes</div>
+      <div class="fund-card">
+        <textarea class="fund-textarea" id="fund-notes" placeholder="Write your fundamental analysis here — interest rates, CPI direction, central bank stances, key news events...&#10;&#10;This saves automatically to your account." oninput="saveFundNotes()"></textarea>
+        <div class="fund-saved" id="fund-saved"></div>
+      </div>
+
+      <!-- Recent trades preview -->
+      <div class="section-label">Recent Trades</div>
+      <div id="dash-recent"></div>
+
+    </div><!-- /dashboard -->
+
+    <!-- ▸ TRADE SUGGESTIONS PAGE -->
+    <div class="page" id="page-suggestions">
+      <div class="page-header">
+        <h1>Auto Trade Suggestions</h1>
+        <p class="ph-sub">Generated from currency strength analysis</p>
+      </div>
+
+      <!-- Requires strength calculation first -->
+      <div id="sugg-empty" class="empty-panel">
+        <div class="ep-icon">📊</div>
+        <div class="ep-text">Calculate currency strength on the Dashboard first to generate trade suggestions.</div>
+        <button class="btn-gold-sm" onclick="goPage('dashboard')">Go to Dashboard →</button>
+      </div>
+
+      <div id="sugg-list" style="display:none"></div>
+
+      <!-- Premium lock overlay (shown if !paid) -->
+      <div class="premium-gate" id="sugg-gate" style="display:none">
+        <div class="pg-blur"></div>
+        <div class="pg-box">
+          <div class="pg-lock">🔐</div>
+          <div class="pg-title">Premium Feature</div>
+          <div class="pg-body">Auto Trade Suggestions are available on the paid plan. Upgrade to unlock AI-generated setups based on real-time currency strength.</div>
+          <button class="btn-gold" onclick="showPayment()">Unlock Access →</button>
+        </div>
+      </div>
+    </div><!-- /suggestions -->
+
+    <!-- ▸ CHECKLIST PAGE -->
+    <div class="page" id="page-checklist">
+      <div class="page-header">
+        <h1>Pre-Trade Checklist</h1>
+        <p class="ph-sub">Complete before every single entry</p>
+      </div>
+
+      <div class="cl-progress-wrap">
+        <div class="cl-bar-bg"><div class="cl-bar" id="cl-bar"></div></div>
+        <div class="cl-meta"><span id="cl-count">0/12</span><span id="cl-pct">0%</span></div>
+      </div>
+
+      <!-- Technical -->
+      <div class="cl-group">
+        <div class="clg-title"><span class="clg-dot" style="background:var(--gold)"></span>Technical</div>
+        <div class="cl-item" data-id="trend" onclick="clToggle(this)"><div class="cl-box"></div><span>H4 trend confirmed (HH/HL or LH/LL)</span></div>
+        <div class="cl-item" data-id="zone" onclick="clToggle(this)"><div class="cl-box"></div><span>Valid Supply/Demand zone identified</span></div>
+        <div class="cl-item" data-id="fresh" onclick="clToggle(this)"><div class="cl-box"></div><span>Zone is FRESH — never previously tested</span></div>
+        <div class="cl-item" data-id="impulse" onclick="clToggle(this)"><div class="cl-box"></div><span>Strong impulse move away from zone</span></div>
+        <div class="cl-item" data-id="liquidity" onclick="clToggle(this)"><div class="cl-box"></div><span>Liquidity sweep / stop hunt confirmed</span></div>
+        <div class="cl-item" data-id="entry" onclick="clToggle(this)"><div class="cl-box"></div><span>Entry type defined (OB / limit / confirmation)</span></div>
+      </div>
+
+      <!-- Fundamental -->
+      <div class="cl-group">
+        <div class="clg-title"><span class="clg-dot" style="background:#4a9eff"></span>Fundamental</div>
+        <div class="cl-item" data-id="news" onclick="clToggle(this)"><div class="cl-box"></div><span>No high-impact news within 30 mins</span></div>
+        <div class="cl-item" data-id="rate" onclick="clToggle(this)"><div class="cl-box"></div><span>Rate bias aligns with trade direction</span></div>
+        <div class="cl-item" data-id="cpi" onclick="clToggle(this)"><div class="cl-box"></div><span>CPI trend supports direction</span></div>
+        <div class="cl-item" data-id="cs" onclick="clToggle(this)"><div class="cl-box"></div><span>Currency strength confirms trade</span></div>
+      </div>
+
+      <!-- Risk -->
+      <div class="cl-group">
+        <div class="clg-title"><span class="clg-dot" style="background:#00c896"></span>Risk & Session</div>
+        <div class="cl-item" data-id="rr" onclick="clToggle(this)"><div class="cl-box"></div><span>R:R is at least 1:2 before entry</span></div>
+        <div class="cl-item" data-id="session" onclick="clToggle(this)"><div class="cl-box"></div><span>Within London session trading window</span></div>
+      </div>
+
+      <div class="cl-actions">
+        <button class="btn-ghost" onclick="clReset()">Reset</button>
+        <button class="btn-gold" onclick="clSubmit()">Proceed to Trade →</button>
+      </div>
+    </div><!-- /checklist -->
+
+    <!-- ▸ JOURNAL PAGE -->
+    <div class="page" id="page-journal">
+      <div class="page-header-row">
+        <div>
+          <h1>Trade Journal</h1>
+          <p class="ph-sub" id="j-subtitle">0 trades</p>
+        </div>
+        <button class="btn-gold-sm" onclick="jShowForm()">+ Log Trade</button>
+      </div>
+
+      <!-- Log form -->
+      <div id="j-form-wrap" style="display:none">
+        <div class="j-form">
+          <div class="j-form-title">Log New Trade</div>
+          <div class="jfr">
+            <div class="fg"><label>Pair</label>
+              <select id="j-pair"><option>XAUUSD</option><option>GBPUSD</option><option>EURUSD</option><option>USDJPY</option><option>AUDUSD</option><option>USDCAD</option><option>NZDUSD</option><option>USDCHF</option><option>GBPJPY</option><option>EURJPY</option><option>Other</option></select>
+            </div>
+            <div class="fg"><label>Direction</label>
+              <select id="j-dir"><option value="BUY">BUY ↑</option><option value="SELL">SELL ↓</option></select>
+            </div>
+          </div>
+          <div class="jfr jfr3">
+            <div class="fg"><label>Entry</label><input id="j-entry" type="number" step="0.01" placeholder="0.00" oninput="jCalcRR()"/></div>
+            <div class="fg"><label>Stop Loss</label><input id="j-sl" type="number" step="0.01" placeholder="0.00" oninput="jCalcRR()"/></div>
+            <div class="fg"><label>Take Profit</label><input id="j-tp" type="number" step="0.01" placeholder="0.00" oninput="jCalcRR()"/></div>
+          </div>
+          <div class="rr-pill" id="j-rr">R:R  — : —</div>
+          <div class="fg"><label>Outcome</label>
+            <div class="outcome-row">
+              <button class="oc-btn win" onclick="jSetOC('win',this)">✅ Win</button>
+              <button class="oc-btn loss" onclick="jSetOC('loss',this)">❌ Loss</button>
+              <button class="oc-btn be" onclick="jSetOC('be',this)">〰 Breakeven</button>
+            </div>
+          </div>
+          <div class="fg"><label>Setup Tags</label>
+            <div class="tag-row" id="j-tags">
+              <span class="jtag" onclick="jTag(this,'A+ Setup')">A+ Setup</span>
+              <span class="jtag" onclick="jTag(this,'Clean OB')">Clean OB</span>
+              <span class="jtag" onclick="jTag(this,'BOS Entry')">BOS Entry</span>
+              <span class="jtag" onclick="jTag(this,'Demand Zone')">Demand Zone</span>
+              <span class="jtag" onclick="jTag(this,'Supply Zone')">Supply Zone</span>
+              <span class="jtag" onclick="jTag(this,'Liquidity Grab')">Liquidity Grab</span>
+              <span class="jtag warn" onclick="jTag(this,'Revenge Trade')">⚠ Revenge</span>
+              <span class="jtag warn" onclick="jTag(this,'FOMO')">⚠ FOMO</span>
+            </div>
+          </div>
+          <div class="fg"><label>Notes</label>
+            <textarea id="j-notes" placeholder="What did you see? What went right or wrong? Be honest."></textarea>
+          </div>
+          <div class="j-form-actions">
+            <button class="btn-ghost" onclick="jHideForm()">Cancel</button>
+            <button class="btn-gold" onclick="jSubmit()">Save Trade</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="j-filters" id="j-filters">
+        <button class="jf-btn active" onclick="jFilter('all',this)">All</button>
+        <button class="jf-btn" onclick="jFilter('win',this)">Wins</button>
+        <button class="jf-btn" onclick="jFilter('loss',this)">Losses</button>
+        <button class="jf-btn" onclick="jFilter('be',this)">Breakeven</button>
+      </div>
+
+      <div id="j-list"></div>
+    </div><!-- /journal -->
+
+    <!-- ▸ ANALYTICS PAGE -->
+    <div class="page" id="page-analytics">
+      <div class="page-header">
+        <h1>Performance</h1>
+        <p class="ph-sub">Your trading analytics</p>
+      </div>
+
+      <div class="an-grid">
+        <div class="an-card"><div class="an-val green" id="an-wins">0</div><div class="an-lbl">Wins</div></div>
+        <div class="an-card"><div class="an-val red" id="an-losses">0</div><div class="an-lbl">Losses</div></div>
+        <div class="an-card"><div class="an-val gold" id="an-rr">0.0</div><div class="an-lbl">Avg R:R</div></div>
+        <div class="an-card"><div class="an-val" id="an-wr">0%</div><div class="an-lbl">Win Rate</div></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-label">Equity Curve (R multiples)</div>
+        <div class="chart-box"><canvas id="eq-chart"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-label">Outcome Distribution</div>
+        <div class="chart-box" style="height:200px"><canvas id="dist-chart"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-label">Win Rate — Last 10 Trades</div>
+        <div class="chart-box"><canvas id="wr-chart"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-label">Performance by Pair</div>
+        <div id="pair-stats"></div>
+      </div>
+    </div><!-- /analytics -->
+
+  </div><!-- /app-body -->
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <div class="bn-item active" data-page="dashboard" onclick="goPage('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      <span>Home</span>
+    </div>
+    <div class="bn-item" data-page="suggestions" onclick="goPage('suggestions')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>Signals</span>
+    </div>
+    <div class="bn-item" data-page="checklist" onclick="goPage('checklist')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      <span>Checklist</span>
+    </div>
+    <div class="bn-item" data-page="journal" onclick="goPage('journal')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+      <span>Journal</span>
+    </div>
+    <div class="bn-item" data-page="analytics" onclick="goPage('analytics')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Analytics</span>
+    </div>
+  </nav>
+
+</div><!-- /screen-app -->
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<!-- TRADE CONFIRM MODAL -->
+<div id="modal-confirm" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-ico">⚡</div>
+    <h2 class="modal-title">Confirm Your Trade</h2>
+    <p class="modal-body">Before logging — confirm you followed your rules:</p>
+    <div class="modal-rules">
+      <div class="mr-item">I waited for a proper confirmation before entering</div>
+      <div class="mr-item">My stop is placed correctly beyond the zone</div>
+      <div class="mr-item">This is NOT a revenge or FOMO trade</div>
+      <div class="mr-item">My R:R is at least 1:2</div>
+      <div class="mr-item">I am calm and trading my plan</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="jCancelConfirm()">Cancel</button>
+      <button class="btn-gold" onclick="jConfirmSave()">✓ I Confirm — Save Trade</button>
+    </div>
+  </div>
+</div>
+
+<!-- PWA INSTALL BANNER -->
+<div class="pwa-banner" id="pwa-banner" style="display:none">
+  <div class="pwa-ico">📈</div>
+  <div class="pwa-txt">
+    <div class="pwa-title">Install TES Pro</div>
+    <div class="pwa-sub">Add to home screen for the best experience</div>
+  </div>
+  <div class="pwa-actions">
+    <button class="pwa-install" onclick="pwaInstall()">Install</button>
+    <button class="pwa-dismiss" onclick="pwaDismiss()">✕</button>
+  </div>
+</div>
+
+<script src="firebase.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
